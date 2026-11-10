@@ -1,0 +1,91 @@
+{
+  "version": "2.3",
+  "updatedAt": "10/11/2026 09:57",
+  "teacherAccounts": [
+    {
+      "username": "gv_toan1",
+      "password": "123456",
+      "fullName": "Thầy Nguyễn Văn An",
+      "school": "Tổ Toán - THPT Thuận Thành số 1",
+      "classes": [
+        "12A1",
+        "12A2"
+      ]
+    },
+    {
+      "username": "gv_toan2",
+      "password": "123456",
+      "fullName": "Cô Trần Thị Bích",
+      "school": "Tổ Toán - THPT Quế Võ số 1",
+      "classes": [
+        "11B1"
+      ]
+    }
+  ],
+  "studentAccounts": [
+    {
+      "username": "hs01",
+      "fullName": "Nguyễn Minh Quân",
+      "className": "12A1",
+      "teacherUsername": "gv_toan1",
+      "password": "123456",
+      "changedByStudent": false
+    },
+    {
+      "username": "hs02",
+      "fullName": "Trần Thu Hà",
+      "className": "12A1",
+      "teacherUsername": "gv_toan1",
+      "password": "123456",
+      "changedByStudent": false
+    },
+    {
+      "username": "hs03",
+      "fullName": "Lê Hoàng Nam",
+      "className": "12A1",
+      "teacherUsername": "gv_toan1",
+      "password": "123456",
+      "changedByStudent": false
+    },
+    {
+      "username": "hs04",
+      "fullName": "Phạm Ngọc Ánh",
+      "className": "12A2",
+      "teacherUsername": "gv_toan1",
+      "password": "123456",
+      "changedByStudent": false
+    },
+    {
+      "username": "hs05",
+      "fullName": "Vũ Đức Thịnh",
+      "className": "12A2",
+      "teacherUsername": "gv_toan1",
+      "password": "123456",
+      "changedByStudent": false
+    },
+    {
+      "username": "11b1_hung",
+      "fullName": "Hoàng Gia Hưng",
+      "className": "11B1",
+      "teacherUsername": "gv_toan2",
+      "password": "123456",
+      "changedByStudent": false
+    }
+  ],
+  "scoringConfig": {
+    "p1Count": 4,
+    "p1Point": 0.25,
+    "p2Count": 2,
+    "p2Pt1": 0.1,
+    "p2Pt2": 0.25,
+    "p2Pt3": 0.5,
+    "p2Pt4": 1.0,
+    "p3Count": 2,
+    "p3Point": 0.5
+  },
+  "examMeta": {
+    "examTitle": "Đề Tự Luyện Toán THPT - Chuẩn Cấu Trúc 2025",
+    "durationMinutes": 45,
+    "shuffleMode": "full"
+  }
+}
