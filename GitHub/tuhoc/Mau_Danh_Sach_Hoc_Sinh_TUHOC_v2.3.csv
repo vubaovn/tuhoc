@@ -1,0 +1,7 @@
+﻿STT,Ho_va_ten,Lop,Tai_khoan,Mat_khau,Ghi_chu
+1,Nguyễn Hoàng Bách,12A1,12a1_bach,123456,Tài khoản chỉ định sẵn
+2,Trần Ngọc Mai,12A1,12a1_mai,123456,Tài khoản chỉ định sẵn
+3,Lê Minh Khôi,12A1,,123456,Để trống cột Tài khoản tự sinh mã
+4,Phạm Thu Trang,12A1,,,Để trống TK và MK tự sinh
+5,Đỗ Quang Huy,12A2,12a2_huy,123456,Học sinh lớp 12A2
+6,Vũ Phương Linh,12A2,,,Tự sinh TK và MK
