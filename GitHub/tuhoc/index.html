@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDO-TUHOC v2.2 - Hệ thống Tự luyện Đề & Quản lý Lớp học Toán</title>
+  <title>TDO-TUHOC v2.3 - Hệ thống Tự luyện Đề & Quản lý Lớp học Toán</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
@@ -65,14 +65,16 @@
         <div>
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-lg md:text-xl font-extrabold tracking-tight">TDO-TUHOC 2025</h1>
-            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900">Version 2.2</span>
-            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">Cấu trúc Điểm tùy chỉnh • Bảo mật GV • Nạp CSV</span>
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900">Version 2.3</span>
+            <span id="dbSyncStatusBadge" onclick="openDatabaseManagerModal()" class="cursor-pointer text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 transition">
+              💾 CSDL: Tự động đồng bộ Web
+            </span>
           </div>
-          <p class="text-xs text-sky-100 mt-0.5">Tự động đếm câu &amp; gợi ý thang điểm • Phân quyền Giáo viên &amp; Lớp học • Nhập HS hàng loạt từ file .csv</p>
+          <p class="text-xs text-sky-100 mt-0.5">Đồng bộ CSDL đa thiết bị (PC &amp; Điện thoại) • Cấu trúc điểm tùy chỉnh • Xem chi tiết phương án &amp; Lời giải bài làm HS</p>
         </div>
       </div>
 
-      <!-- PORTAL SWITCHER -->
+      <!-- PORTAL SWITCHER & DB BUTTON -->
       <div class="flex flex-wrap items-center gap-2 bg-slate-900/50 p-1.5 rounded-xl border border-white/15">
         <button id="btnPortalStudent" onclick="switchPortalMode('student')" class="px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition text-white hover:bg-white/10 flex items-center gap-1.5">
           <span>👨‍🎓 Cổng Học sinh Làm bài</span>
@@ -80,6 +82,9 @@
         <button id="btnPortalTeacher" onclick="switchPortalMode('teacher')" class="px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition bg-white text-slate-900 shadow flex items-center gap-1.5">
           <span id="portalTeacherLockIcon">🔒</span>
           <span id="portalTeacherBtnLabel">Cổng Giáo viên (Đăng nhập / Đăng ký)</span>
+        </button>
+        <button id="btnOpenDbModalTop" onclick="openDatabaseManagerModal()" class="px-3 py-2 rounded-lg text-xs font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 transition flex items-center gap-1 shadow">
+          <span>💾 CSDL Web</span>
         </button>
       </div>
     </div>
@@ -115,6 +120,9 @@
             📊 3. Kết quả Bài làm (<span id="badgeResultCount">0</span>)
           </button>
           <span class="h-4 w-px bg-slate-700 mx-1"></span>
+          <button id="btnHeaderExportDb" onclick="openDatabaseManagerModal()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-extrabold text-white transition">
+            💾 Lưu / Đồng bộ CSDL Web
+          </button>
           <button id="btnOpenTeacherChangePass" onclick="openTeacherChangePassModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-sky-300 border border-slate-700 transition">
             🔑 Đổi MK
           </button>
@@ -133,16 +141,19 @@
     <!-- CỔNG BẢO MẬT GIÁO VIÊN: ĐĂNG NHẬP HOẶC TẠO TÀI KHOẢN GIÁO VIÊN MỚI  -->
     <!-- =================================================================== -->
     <section id="panelTeacherAuthGate" class="max-w-4xl mx-auto space-y-6 my-2">
-      <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <!-- Giải thích rõ nguyên nhân & Cơ chế đồng bộ đa thiết bị (PC Windows 11 <-> Điện thoại) -->
+      <div class="bg-sky-50 border border-sky-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-start gap-3">
-          <span class="text-2xl">🛡️</span>
-          <div class="text-xs text-amber-950 space-y-0.5">
-            <div class="font-extrabold text-sm">Khu vực dành riêng cho Giáo viên đã được khóa bảo mật!</div>
-            <p>Học sinh không thể tự ý truy cập bảng mật khẩu, danh sách lớp hay đáp án đề gốc. Giáo viên vui lòng <strong>Đăng nhập</strong> hoặc <strong>Tạo tài khoản Giáo viên mới</strong> để quản lý Lớp học, thiết lập thang điểm và cấp tài khoản cho Học sinh lớp mình.</p>
+          <span class="text-2xl">☁️</span>
+          <div class="text-xs text-slate-800 space-y-1">
+            <div class="font-extrabold text-sm text-sky-950">Cơ chế Lưu CSDL Đa thiết bị (Đăng nhập chung trên cả Windows 11 &amp; Điện thoại)</div>
+            <p>
+              Ở các bản trước, dữ liệu chỉ lưu trong bộ nhớ trình duyệt (<code class="font-mono">localStorage</code>) của từng máy nên tạo tài khoản trên PC thì điện thoại chưa thấy. Bản <strong>v2.3</strong> đã tích hợp <strong>File CSDL trung tâm (<code class="font-mono">tuhoc_database.json</code> + API <code class="font-mono">/api/db</code>)</strong>: mọi tài khoản GV, Lớp, tài khoản HS, đề thi và bài làm đều lưu vào CSDL chung của trang web.
+            </p>
           </div>
         </div>
-        <button type="button" onclick="switchPortalMode('student')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shrink-0 shadow">
-          👨‍🎓 Tôi là Học sinh (Sang làm bài) →
+        <button type="button" onclick="openDatabaseManagerModal()" class="px-3.5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-extrabold text-xs shrink-0 shadow">
+          💾 Mở Quản lý File CSDL →
         </button>
       </div>
 
@@ -181,14 +192,14 @@
           </div>
 
           <div class="pt-4 border-t border-slate-100 space-y-2">
-            <div class="text-xs font-bold text-slate-500">⚡ Đăng nhập nhanh tài khoản Giáo viên mẫu để kiểm thử:</div>
+            <div class="text-xs font-bold text-slate-500">⚡ Danh sách Tài khoản Giáo viên trong CSDL hiện tại (bấm để đăng nhập nhanh):</div>
             <div id="quickTeacherDemoButtons" class="flex flex-col gap-2">
               <!-- Populated by JS -->
             </div>
           </div>
         </div>
 
-        <!-- CỘT PHẢI: TẠO TÀI KHOẢN GIÁO VIÊN MỚI & KHỞP TẠO LỚP -->
+        <!-- CỘT PHẢI: TẠO TÀI KHOẢN GIÁO VIÊN MỚI & KHỞI TẠO LỚP -->
         <div class="lg:col-span-6 bg-white rounded-2xl shadow-md border border-slate-200 p-6 space-y-4">
           <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
             <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl font-black shadow">
@@ -196,7 +207,7 @@
             </div>
             <div>
               <h2 class="text-lg font-extrabold text-slate-900">Tạo Tài khoản Giáo viên mới</h2>
-              <p class="text-xs text-slate-500">Tạo tài khoản riêng, thiết lập các Lớp phụ trách và quản lý HS độc lập</p>
+              <p class="text-xs text-slate-500">Tự động lưu vào CSDL trang web (<code class="font-mono">tuhoc_database.json</code> / <code class="font-mono">/api/db</code>)</p>
             </div>
           </div>
 
@@ -219,7 +230,7 @@
 
             <div>
               <label for="inputRegTeacherClasses" class="block text-xs font-bold text-slate-700 mb-1">Các Lớp phụ trách (cách nhau bởi dấu phẩy) *</label>
-              <input id="inputRegTeacherClasses" type="text" value="12A1, 12A2" placeholder="VD: 12A1, 12A2, 11B1" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-semibold">
+              <input id="inputRegTeacherClasses" type="text" value="12A1, 12A2" placeholder="VD: 12A1, 12A2, 10A01" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-semibold">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -234,7 +245,7 @@
             </div>
 
             <button id="btnRegisterTeacherSubmit" onclick="handleTeacherRegister()" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md transition">
-              ✨ Tạo Tài khoản Giáo viên &amp; Khởi tạo Lớp ngay
+              ✨ Tạo Tài khoản Giáo viên &amp; Lưu vào CSDL
             </button>
           </div>
         </div>
@@ -250,9 +261,9 @@
           <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
             <span>Tích hợp bộ đọc Equation (&lt;m:oMath&gt;) + MathType (MTEF v5) + Tự động đếm câu &amp; gợi ý điểm</span>
           </div>
-          <h2 class="text-lg font-extrabold text-slate-900">Nạp Đề gốc Word (.docx), Thiết lập Cấu trúc Điểm &amp; Giao bài cho Lớp</h2>
+          <h2 class="text-lg font-extrabold text-slate-900">Nạp Đề gốc Word (.docx), Thiết lập Cấu trúc Điểm &amp; Lưu vào CSDL Web</h2>
           <p class="text-sm text-slate-600">
-            Khi nạp đề gốc, hệ thống <strong>tự động đếm số câu từng phần</strong> và <strong>điền sẵn mức điểm gợi ý</strong> (Phần 1: <code>0.25</code>, Phần 2: <code>0.1 / 0.25 / 0.5 / 1.0</code>, Phần 3: <code>0.5</code>). Giáo viên có thể sửa lại số câu hoặc điểm mỗi câu ngay bên dưới.
+            Khi nạp đề gốc, hệ thống <strong>tự động đếm số câu từng phần</strong>, <strong>điền sẵn mức điểm gợi ý</strong> và tự động đồng bộ vào CSDL của trang web để Học sinh mở trên điện thoại hay máy tính đều nhận được đề.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -317,7 +328,7 @@
           </div>
 
           <!-- =============================================================== -->
-          <!-- MỤC 4: CẤU TRÚC ĐỀ & TÍNH ĐIỂM MỖI CÂU (THEO ĐÚNG MẪU YÊU CẦU)  -->
+          <!-- MỤC 4: CẤU TRÚC ĐỀ & TÍNH ĐIỂM MỖI CÂU                          -->
           <!-- =============================================================== -->
           <div class="bg-slate-50 rounded-2xl border-2 border-blue-200 p-4 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
@@ -422,18 +433,18 @@
 
           <div class="pt-1 flex flex-col sm:flex-row gap-2.5">
             <button id="btnParseAndGenerateLink" onclick="generateStudentShareLink()" class="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2">
-              <span>🔗 BƯỚC TIẾP: Áp dụng Cấu trúc Điểm &amp; Tạo Link Giao bài</span>
+              <span>🔗 BƯỚC TIẾP: Lưu Cấu trúc Điểm vào CSDL &amp; Tạo Link Giao bài</span>
             </button>
           </div>
         </div>
 
-        <!-- CỘT PHẢI (7 CỘT): KẾT QUẢ TẠO LINK & CHIA SẺ CHO HỌC SINH -->
+        <!-- CỘT PHẢI (7 CỘT): KẾT QUẢ TẠO LINK, ĐỒNG BỘ CSDL & CHIA SẺ CHO HỌC SINH -->
         <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between space-y-5">
           <div class="space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-2.5">
                 <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">✓</span>
-                <h3 class="font-bold text-slate-800 text-base">THỐNG KÊ CẤU TRÚC ĐỀ &amp; LINK GIAO BÀI CHO HỌC SINH</h3>
+                <h3 class="font-bold text-slate-800 text-base">THỐNG KÊ CẤU TRÚC ĐỀ &amp; ĐỒNG BỘ ĐA THIẾT BỊ</h3>
               </div>
               <span id="parsedQuestionSummaryBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Đang chờ nạp đề
@@ -465,8 +476,8 @@
 
             <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-3">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">🔗 Link Giao bài cho Học sinh (Đã nhúng Cấu trúc Điểm &amp; Khóa bảo mật GV)</span>
-                <span id="shareLinkModeLabel" class="text-xs px-2 py-0.5 rounded bg-white/10 text-sky-200">An toàn • Chỉ mở Cổng HS</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">🔗 Link Giao bài cho Học sinh (Đã nhúng Cấu trúc Điểm &amp; DS Tài khoản)</span>
+                <span id="shareLinkModeLabel" class="text-xs px-2 py-0.5 rounded bg-white/10 text-sky-200">Mở được trên mọi Điện thoại &amp; PC</span>
               </div>
               <div class="flex flex-col sm:flex-row gap-2">
                 <input id="inputGeneratedShareLink" type="text" readonly value="Hãy bấm '⚡ Nạp Đề mẫu chuẩn 2025' hoặc chọn file .docx để tạo link..." class="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-mono text-sky-200 focus:outline-none">
@@ -475,13 +486,16 @@
                 </button>
               </div>
               <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-300">
-                <span>💡 Gửi Link hoặc xuất file HTML độc lập gửi qua Zalo cho lớp:</span>
+                <span>💡 Đồng bộ lên <code class="font-mono">tuhoc.vubao.workers.dev</code> hoặc gửi cho lớp:</span>
                 <div class="flex flex-wrap gap-2">
-                  <button id="btnExportStandaloneStudentHtml" onclick="exportStandaloneStudentExamHtml()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold transition">
-                    📤 Xuất file TUHOC_v2.2_Hoc_Sinh.html
+                  <button id="btnDownloadDatabaseJson" onclick="exportDatabaseJsonFile()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">
+                    💾 Xuất CSDL (tuhoc_database.json)
+                  </button>
+                  <button id="btnExportStandaloneStudentHtml" onclick="exportSelfContainedIndexHtml()" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold transition">
+                    📦 Xuất index.html (Đã nhúng sẵn CSDL)
                   </button>
                   <button id="btnOpenStudentViewNow" onclick="openStudentPracticeNow()" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold transition">
-                    👨‍🎓 Mở Cổng Học sinh làm thử ngay →
+                    👨‍🎓 Mở Cổng Học sinh làm thử →
                   </button>
                 </div>
               </div>
@@ -533,7 +547,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-3">
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-              Phân quyền theo Giáo viên đăng nhập
+              Phân quyền theo Giáo viên đăng nhập • Lưu vào CSDL Web
             </span>
             <h2 class="text-lg font-extrabold text-slate-900 mt-1">🏫 Danh sách Lớp học do bạn phụ trách</h2>
             <p class="text-xs text-slate-500">Mỗi Giáo viên tạo và quản lý danh sách Lớp, tài khoản Học sinh và bảng điểm riêng của các Lớp mình dạy.</p>
@@ -541,7 +555,7 @@
 
           <!-- Form tạo nhanh Lớp mới -->
           <div class="flex flex-wrap items-center gap-2">
-            <input id="inputNewClassName" type="text" placeholder="Nhập tên Lớp mới (VD: 12A3)" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none w-48">
+            <input id="inputNewClassName" type="text" placeholder="Nhập tên Lớp mới (VD: 10A01)" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:outline-none w-48">
             <button id="btnCreateNewClass" onclick="createNewTeacherClass()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow transition">
               ➕ Tạo Lớp mới
             </button>
@@ -607,7 +621,7 @@
               </div>
             </div>
             <div class="text-[11px] text-slate-500 leading-relaxed">
-              💡 <strong>Mẹo:</strong> Nếu trong file <code>.csv</code> có nhiều lớp (VD: <code>12A1</code>, <code>12A2</code>), hệ thống sẽ tự động thêm lớp mới vào danh sách Lớp của Giáo viên!
+              💡 <strong>Mẹo:</strong> Nếu trong file <code>.csv</code> có nhiều lớp (VD: <code>12A1</code>, <code>10A01</code>), hệ thống sẽ tự động thêm lớp mới vào danh sách Lớp của Giáo viên!
             </div>
           </div>
         </div>
@@ -664,12 +678,12 @@
               </div>
               <div>
                 <label for="inputNewAccUsername" class="block text-xs font-bold text-slate-700 mb-1">Mã TK (Trống=Tự sinh)</label>
-                <input id="inputNewAccUsername" type="text" placeholder="VD: 12a1_duy" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono">
+                <input id="inputNewAccUsername" type="text" placeholder="VD: 10a0101" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono">
               </div>
             </div>
             <div>
               <label for="inputNewAccFullName" class="block text-xs font-bold text-slate-700 mb-1">Họ và tên Học sinh *</label>
-              <input id="inputNewAccFullName" type="text" placeholder="VD: Phạm Đức Duy" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300">
+              <input id="inputNewAccFullName" type="text" placeholder="VD: Hoàng Thị Kiều Anh" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300">
             </div>
             <div>
               <label for="inputNewAccPassword" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu khởi tạo</label>
@@ -686,7 +700,7 @@
             <p class="text-xs text-slate-500">
               Mỗi dòng 1 học sinh (vào lớp đang chọn ở trên) hoặc theo cú pháp: <code class="font-mono">Tài khoản | Họ tên | Lớp | Mật khẩu</code>.
             </p>
-            <textarea id="textareaBulkAccounts" rows="3" placeholder="Đặng Hoàng Anh&#10;Bùi Phương Thảo&#10;12a1_bao | Ngô Gia Bảo | 12A1 | 123456" class="w-full p-3 text-xs rounded-xl border border-slate-300 font-mono focus:border-blue-600 focus:outline-none"></textarea>
+            <textarea id="textareaBulkAccounts" rows="3" placeholder="Đặng Hoàng Anh&#10;Bùi Phương Thảo&#10;10a0101 | Hoàng Thị Kiều Anh | 10A01 | 123456" class="w-full p-3 text-xs rounded-xl border border-slate-300 font-mono focus:border-blue-600 focus:outline-none"></textarea>
             <button id="btnBulkCreateAccounts" onclick="bulkCreateStudentAccounts()" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow transition">
               ⚡ Cấp nhanh từ Khung văn bản
             </button>
@@ -796,7 +810,7 @@
                 <span id="loggedStudentClassBanner" class="text-xs px-2 py-0.5 rounded bg-blue-600 text-white font-bold">Lớp 12A1</span>
                 <span id="loggedStudentUserBanner" class="text-xs font-mono text-amber-300">(TK: hs01)</span>
               </div>
-              <p class="text-xs text-slate-400 mt-0.5">Khi nộp bài, điểm số từng câu sẽ được chấm theo đúng cấu trúc điểm của Giáo viên và lưu vào Bảng kết quả lớp.</p>
+              <p class="text-xs text-slate-400 mt-0.5">Khi nộp bài, điểm số, các phương án em chọn và bài làm sẽ tự động lưu vào CSDL kết quả lớp của Giáo viên.</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -844,7 +858,7 @@
         <div id="studentResultSummaryCard" class="hidden bg-white rounded-2xl shadow-md border-2 border-emerald-500 p-6 space-y-5">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Đã nộp bài &amp; Lưu kết quả cho Giáo viên</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Đã nộp bài &amp; Lưu kết quả vào CSDL cho Giáo viên</span>
               <h3 class="text-xl font-extrabold text-slate-900 mt-1">Kết quả làm bài của em</h3>
               <p class="text-xs text-slate-500">Em hãy bấm nút <strong>"📖 Hiện lời giải chi tiết"</strong> ở từng câu bên dưới (hoặc nút Hiện tất cả lời giải) để xem hướng dẫn giải.</p>
             </div>
@@ -894,11 +908,11 @@
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div class="space-y-1">
           <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            Bảng điểm &amp; Phân tích kết quả theo Lớp của Giáo viên
+            Bảng điểm &amp; Phân tích chi tiết từng câu của Học sinh
           </span>
           <h2 class="text-lg font-extrabold text-slate-900">Quản lý Kết quả Bài làm của Học sinh</h2>
           <p class="text-sm text-slate-600">
-            Theo dõi điểm số từng phần theo đúng cấu trúc điểm đã thiết lập, lọc theo Lớp, bấm <strong>"🔍 Xem bài làm"</strong> để kiểm tra chi tiết từng câu học sinh đã chọn hoặc <strong>"🔄 Reset MK"</strong>.
+            Bấm <strong>"🔍 Xem bài làm"</strong> ở bất kỳ học sinh nào để xem đầy đủ <strong>đề bài, tất cả phương án A/B/C/D, phương án học sinh đã chọn, đáp án đúng</strong> và bấm nút <strong>"📖 Hiện lời giải chi tiết"</strong> của từng câu cụ thể.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -1025,17 +1039,23 @@
 
   <!-- =================================================================== -->
   <!-- MODAL 3: GIÁO VIÊN XEM CHI TIẾT BÀI LÀM CỦA 1 HỌC SINH              -->
+  <!-- (HIỂN THỊ ĐỦ PHƯƠNG ÁN HS CHỌN, ĐÁP ÁN & NÚT MỞ LỜI GIẢI CHI TIẾT)  -->
   <!-- =================================================================== -->
   <div id="teacherSubmissionDetailModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
-      <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between gap-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+      <div class="bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span class="text-xs font-bold text-amber-300 uppercase">📋 Chi tiết bài làm của Học sinh</span>
-          <h3 id="submissionModalTitle" class="text-sm md:text-base font-extrabold">Nguyễn Minh Quân (Lớp 12A1) - Điểm: 3.75/4.00</h3>
+          <span class="text-xs font-bold text-amber-300 uppercase">📋 CHI TIẾT BÀI LÀM CỦA HỌC SINH (ĐẦY ĐỦ PHƯƠNG ÁN CHỌN, ĐÁP ÁN &amp; LỜI GIẢI)</span>
+          <h3 id="submissionModalTitle" class="text-sm md:text-base font-extrabold mt-0.5">Nguyễn Minh Quân (Lớp 12A1) - Điểm: 3.75/4.00</h3>
         </div>
-        <button id="btnCloseSubmissionModal" onclick="closeSubmissionDetailModal()" class="w-8 h-8 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-base flex items-center justify-center">×</button>
+        <div class="flex items-center gap-2">
+          <button id="btnToggleAllModalSolutions" onclick="toggleAllModalSubmissionSolutions()" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow transition">
+            📖 Hiện tất cả lời giải chi tiết
+          </button>
+          <button id="btnCloseSubmissionModal" onclick="closeSubmissionDetailModal()" class="w-8 h-8 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-base flex items-center justify-center">×</button>
+        </div>
       </div>
-      <div id="submissionModalBody" class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-3">
+      <div id="submissionModalBody" class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-4">
         <!-- Populated by JS -->
       </div>
     </div>
@@ -1071,6 +1091,73 @@
     </div>
   </div>
 
+  <!-- =================================================================== -->
+  <!-- MODAL 5: QUẢN LÝ FILE CSDL WEB (ĐỒNG BỘ PC WINDOWS 11 & ĐIỆN THOẠI) -->
+  <!-- =================================================================== -->
+  <div id="databaseManagerModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">💾 CƠ SỞ DỮ LIỆU TRANG WEB (ĐA THIẾT BỊ)</span>
+          <h3 class="font-extrabold text-slate-900 text-base md:text-lg">Đồng bộ Tài khoản GV, Tài khoản HS, Đề thi &amp; Bài làm</h3>
+        </div>
+        <button id="btnCloseDbModal" onclick="closeDatabaseManagerModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">×</button>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-900 text-white text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-amber-300">Trạng thái kết nối CSDL hiện tại:</span>
+          <span id="modalDbConnectionStatus" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">Đang kiểm tra...</span>
+        </div>
+        <div id="modalDbSummaryStats" class="text-slate-300">
+          Đang lưu trữ: 0 Giáo viên • 0 Học sinh • 0 Câu hỏi đề gốc • 0 Lượt nộp bài
+        </div>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-700 leading-relaxed">
+        <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 space-y-2">
+          <div class="font-extrabold text-blue-950 text-sm">📌 Cách 1 (Nhanh nhất cho <code class="font-mono">https://tuhoc.vubao.workers.dev/</code>):</div>
+          <p>
+            Sau khi bạn tạo Tài khoản Giáo viên, Lớp, Tài khoản Học sinh và nạp Đề gốc trên máy tính Windows 11, hãy bấm nút <strong>"📦 Xuất index.html (Đã nhúng sẵn CSDL)"</strong> hoặc <strong>"💾 Tải File CSDL (tuhoc_database.json)"</strong> bên dưới để cập nhật lên trang web. Khi đó mở bằng bất kỳ điện thoại hay máy tính nào cũng có sẵn 100% tài khoản GV, HS và bài tập!
+          </p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button type="button" onclick="exportSelfContainedIndexHtml()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow transition">
+              📦 Xuất file index.html (Đã nhúng sẵn toàn bộ CSDL)
+            </button>
+            <button type="button" onclick="exportDatabaseJsonFile()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow transition">
+              💾 Tải về File CSDL (tuhoc_database.json)
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
+          <div class="font-extrabold text-emerald-950 text-sm">📌 Cách 2 (Tự động lưu 2 chiều thời gian thực trên Cloudflare Workers / PHP Host):</div>
+          <p>
+            Trong gói <code class="font-mono">tuhoc_v2.3_full_package.zip</code> đã có sẵn file <strong><code class="font-mono">_worker.js</code></strong> (dành cho Cloudflare Workers/Pages) và <strong><code class="font-mono">api_db.php</code></strong> (dành cho Hosting PHP). Khi triển khai kèm file này (và gắn biến KV tên <code class="font-mono">TUHOC_DB</code> trên Cloudflare), mọi thao tác tạo tài khoản GV/HS hay nộp bài trên máy tính &amp; điện thoại đều tự động ghi thẳng vào CSDL trên Server!
+          </p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button type="button" onclick="syncDatabaseFromServer(true)" class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100 text-emerald-900 font-bold border border-emerald-300 transition">
+              🔄 Tải lại CSDL từ Server ngay
+            </button>
+            <button type="button" onclick="syncDatabaseToServer(true)" class="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold transition">
+              ☁️ Đẩy CSDL hiện tại lên Server (/api/db)
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="font-extrabold text-slate-900 text-sm">📂 Khôi phục / Nạp dữ liệu từ File <code class="font-mono">tuhoc_database.json</code> có sẵn:</div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="inputImportDbJson" accept=".json" class="hidden" onchange="handleImportDatabaseJsonFile(event)">
+            <button type="button" onclick="document.getElementById('inputImportDbJson').click()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold transition">
+              📂 Chọn file tuhoc_database.json từ máy để nạp
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST POPUP GÓC DƯỚI BÊN PHẢI -->
   <div id="appToastPopup" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-950 text-white px-4 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-start gap-3 toast-popup">
     <span id="appToastIcon" class="text-amber-400 text-lg leading-none mt-0.5">⚠️</span>
@@ -1081,19 +1168,23 @@
   <!-- FOOTER -->
   <footer class="bg-slate-900 text-slate-400 text-xs py-4 px-4 border-t border-slate-800 mt-8">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div>© 2025 Hệ sinh thái <strong>TDO-TRONDE v1.5</strong> • <strong>mathEQ v1.6</strong> • <strong>TDO-TUHOC v2.2</strong> (Cấu trúc Điểm tùy chỉnh • Bảo mật GV • Nạp CSV)</div>
+      <div>© 2025 Hệ sinh thái <strong>TDO-TRONDE v1.5</strong> • <strong>mathEQ v1.6</strong> • <strong>TDO-TUHOC v2.3</strong> (Đồng bộ CSDL Đa thiết bị • Xem chi tiết phương án &amp; Lời giải HS)</div>
       <div class="flex items-center gap-3">
-        <span class="text-emerald-400">● Hỗ trợ đầy đủ Equation (&lt;m:oMath&gt;), MathType OLE &amp; Nhập danh sách HS (.csv)</span>
+        <span class="text-emerald-400">● Hỗ trợ đầy đủ Equation (&lt;m:oMath&gt;), MathType OLE &amp; CSDL tuhoc_database.json</span>
       </div>
     </div>
   </footer>
 
   <!-- APPLICATION SCRIPT -->
-  <script>
+  <script id="tuhocMainScript">
     // =========================================================================
-    // 1. DỮ LIỆU ĐỀ GỐC MẪU & TÀI KHOẢN GIÁO VIÊN / HỌC SINH MẶC ĐỊNH
+    // 1. DỮ LIỆU ĐỀ GỐC MẪU & CƠ SỞ DỮ LIỆU MẶC ĐỊNH (CÓ THỂ NHÚNG CẬP NHẬT)
     // =========================================================================
     const EMBEDDED_SAMPLE_DOCX_B64 = "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";
+
+    /*__EMBEDDED_DB_START__*/
+    const PRELOADED_DATABASE_SNAPSHOT = null;
+    /*__EMBEDDED_DB_END__*/
 
     const DEFAULT_SCORING_CONFIG = {
       p1Count: 4,
@@ -1149,14 +1240,14 @@
         score10: 9.38,
         submittedAt: "10/11/2026 07:15",
         details: [
-          { label: "Phần 1 • Câu 1", userChoice: "D", correctChoice: "D", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 2", userChoice: "D", correctChoice: "D", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 3", userChoice: "A", correctChoice: "A", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 4", userChoice: "B", correctChoice: "D", isCorrect: false, earned: 0.00, max: 0.25 },
-          { label: "Phần 2 • Câu 1", userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:Đ", isCorrect: true, earned: 1.00, max: 1.00 },
-          { label: "Phần 2 • Câu 2", userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:S", isCorrect: true, earned: 1.00, max: 1.00 },
-          { label: "Phần 3 • Câu 1", userChoice: "12", correctChoice: "12", isCorrect: true, earned: 0.50, max: 0.50 },
-          { label: "Phần 3 • Câu 2", userChoice: "0,38", correctChoice: "0,38", isCorrect: true, earned: 0.50, max: 0.50 }
+          { part: 1, displayNumber: 1, label: "Phần 1 • Câu 1", userRawChoice: "D", correctAnswer: "D", userChoice: "Em chọn D", correctChoice: "Đáp án đúng: D", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 2, label: "Phần 1 • Câu 2", userRawChoice: "D", correctAnswer: "D", userChoice: "Em chọn D", correctChoice: "Đáp án đúng: D", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 3, label: "Phần 1 • Câu 3", userRawChoice: "A", correctAnswer: "A", userChoice: "Em chọn A", correctChoice: "Đáp án đúng: A", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 4, label: "Phần 1 • Câu 4", userRawChoice: "B", correctAnswer: "D", userChoice: "Em chọn B", correctChoice: "Đáp án đúng: D", isCorrect: false, earned: 0.00, max: 0.25 },
+          { part: 2, displayNumber: 1, label: "Phần 2 • Câu 1", userRawChoice: { a: true, b: false, c: true, d: true }, userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:Đ", isCorrect: true, earned: 1.00, max: 1.00 },
+          { part: 2, displayNumber: 2, label: "Phần 2 • Câu 2", userRawChoice: { a: true, b: false, c: true, d: false }, userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:S", isCorrect: true, earned: 1.00, max: 1.00 },
+          { part: 3, displayNumber: 1, label: "Phần 3 • Câu 1", userRawChoice: "12", shortAnswer: "12", userChoice: "Em điền: 12", correctChoice: "Đáp án đúng: 12", isCorrect: true, earned: 0.50, max: 0.50 },
+          { part: 3, displayNumber: 2, label: "Phần 3 • Câu 2", userRawChoice: "0,38", shortAnswer: "0,38", userChoice: "Em điền: 0,38", correctChoice: "Đáp án đúng: 0,38", isCorrect: true, earned: 0.50, max: 0.50 }
         ]
       },
       {
@@ -1174,14 +1265,14 @@
         score10: 7.50,
         submittedAt: "10/11/2026 07:20",
         details: [
-          { label: "Phần 1 • Câu 1", userChoice: "D", correctChoice: "D", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 2", userChoice: "D", correctChoice: "D", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 3", userChoice: "A", correctChoice: "A", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 1 • Câu 4", userChoice: "D", correctChoice: "D", isCorrect: true, earned: 0.25, max: 0.25 },
-          { label: "Phần 2 • Câu 1", userChoice: "Đúng 3/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:Đ", isCorrect: false, earned: 0.50, max: 1.00 },
-          { label: "Phần 2 • Câu 2", userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:S", isCorrect: true, earned: 1.00, max: 1.00 },
-          { label: "Phần 3 • Câu 1", userChoice: "12", correctChoice: "12", isCorrect: true, earned: 0.50, max: 0.50 },
-          { label: "Phần 3 • Câu 2", userChoice: "0,25", correctChoice: "0,38", isCorrect: false, earned: 0.00, max: 0.50 }
+          { part: 1, displayNumber: 1, label: "Phần 1 • Câu 1", userRawChoice: "D", correctAnswer: "D", userChoice: "Em chọn D", correctChoice: "Đáp án đúng: D", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 2, label: "Phần 1 • Câu 2", userRawChoice: "D", correctAnswer: "D", userChoice: "Em chọn D", correctChoice: "Đáp án đúng: D", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 3, label: "Phần 1 • Câu 3", userRawChoice: "A", correctAnswer: "A", userChoice: "Em chọn A", correctChoice: "Đáp án đúng: A", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 1, displayNumber: 4, label: "Phần 1 • Câu 4", userRawChoice: "D", correctAnswer: "D", userChoice: "Em chọn D", correctChoice: "Đáp án đúng: D", isCorrect: true, earned: 0.25, max: 0.25 },
+          { part: 2, displayNumber: 1, label: "Phần 2 • Câu 1", userRawChoice: { a: true, b: false, c: true, d: false }, userChoice: "Đúng 3/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:Đ", isCorrect: false, earned: 0.50, max: 1.00 },
+          { part: 2, displayNumber: 2, label: "Phần 2 • Câu 2", userRawChoice: { a: true, b: false, c: true, d: false }, userChoice: "Đúng 4/4 ý", correctChoice: "a:Đ, b:S, c:Đ, d:S", isCorrect: true, earned: 1.00, max: 1.00 },
+          { part: 3, displayNumber: 1, label: "Phần 3 • Câu 1", userRawChoice: "12", shortAnswer: "12", userChoice: "Em điền: 12", correctChoice: "Đáp án đúng: 12", isCorrect: true, earned: 0.50, max: 0.50 },
+          { part: 3, displayNumber: 2, label: "Phần 3 • Câu 2", userRawChoice: "0,25", shortAnswer: "0,38", userChoice: "Em điền: 0,25", correctChoice: "Đáp án đúng: 0,38", isCorrect: false, earned: 0.00, max: 0.50 }
         ]
       }
     ];
@@ -1190,8 +1281,9 @@
     // 2. TRẠNG THÁI ỨNG DỤNG (STATE)
     // =========================================================================
     let appState = {
-      portalMode: "teacher",       // "teacher" | "student"
-      activeTeacherTab: "teacher", // "teacher" | "accounts" | "results"
+      portalMode: "teacher",
+      activeTeacherTab: "teacher",
+      dbModeLabel: "Bộ nhớ Trình duyệt + File CSDL Web",
       teacherAccounts: [],
       loggedInTeacher: null,
       activeTeacherClass: "ALL",
@@ -1213,6 +1305,9 @@
       studentAllSolutionsOpen: false,
       openStudentSolutions: {},
       openTeacherSolutions: {},
+      activeModalSubmissionId: "",
+      openModalSolutions: {},
+      modalAllSolutionsOpen: false,
       studentAccounts: [],
       loggedInStudent: null,
       resetTargetUsername: "",
@@ -1220,7 +1315,7 @@
     };
 
     // =========================================================================
-    // 3. TIỆN ÍCH THÔNG BÁO TOAST, LƯU TRỮ & KATEX
+    // 3. TIỆN ÍCH THÔNG BÁO TOAST, LƯU TRỮ & ĐỒNG BỘ CSDL ĐA THIẾT BỊ
     // =========================================================================
     let toastTimer = null;
     function showToast(message, icon = "⚠️", duration = 4200) {
@@ -1287,13 +1382,188 @@
       return `${base}${String(idx).padStart(2, "0")}`;
     }
 
+    // Tạo gói đối tượng CSDL hợp nhất chứa mọi dữ liệu của trang web
+    function buildFullDatabasePayload() {
+      const now = new Date();
+      const timeStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      return {
+        version: "2.3",
+        updatedAt: timeStr,
+        teacherAccounts: appState.teacherAccounts,
+        studentAccounts: appState.studentAccounts,
+        submissions: appState.submissions,
+        scoringConfig: appState.scoringConfig,
+        examMeta: {
+          examTitle: appState.examTitle,
+          durationMinutes: appState.durationMinutes,
+          shuffleMode: appState.shuffleMode
+        },
+        originalQuestions: appState.originalQuestions
+      };
+    }
+
+    // Hợp nhất danh sách theo khóa duy nhất (để không mất tài khoản tạo mới trên máy hoặc trên server)
+    function mergeByKey(existingArr, incomingArr, keyName) {
+      const map = new Map();
+      (existingArr || []).forEach(item => {
+        if (item && item[keyName]) {
+          map.set(String(item[keyName]).toLowerCase(), item);
+        }
+      });
+      (incomingArr || []).forEach(item => {
+        if (item && item[keyName]) {
+          map.set(String(item[keyName]).toLowerCase(), item);
+        }
+      });
+      return Array.from(map.values());
+    }
+
+    function applyDatabasePayloadToState(dbObj, replaceAll = false) {
+      if (!dbObj || typeof dbObj !== "object") return false;
+      let changed = false;
+
+      if (Array.isArray(dbObj.teacherAccounts) && dbObj.teacherAccounts.length > 0) {
+        appState.teacherAccounts = replaceAll
+          ? dbObj.teacherAccounts
+          : mergeByKey(appState.teacherAccounts, dbObj.teacherAccounts, "username");
+        safeSetStorage("tuhoc_v23_teachers", JSON.stringify(appState.teacherAccounts));
+        changed = true;
+      }
+
+      if (Array.isArray(dbObj.studentAccounts) && dbObj.studentAccounts.length > 0) {
+        appState.studentAccounts = replaceAll
+          ? dbObj.studentAccounts
+          : mergeByKey(appState.studentAccounts, dbObj.studentAccounts, "username");
+        safeSetStorage("tuhoc_v23_accounts", JSON.stringify(appState.studentAccounts));
+        changed = true;
+      }
+
+      if (Array.isArray(dbObj.submissions)) {
+        appState.submissions = replaceAll
+          ? dbObj.submissions
+          : mergeByKey(dbObj.submissions, appState.submissions, "id");
+        safeSetStorage("tuhoc_v23_submissions", JSON.stringify(appState.submissions));
+        changed = true;
+      }
+
+      if (dbObj.scoringConfig && typeof dbObj.scoringConfig === "object") {
+        appState.scoringConfig = Object.assign({}, DEFAULT_SCORING_CONFIG, dbObj.scoringConfig);
+        changed = true;
+      }
+
+      if (dbObj.examMeta && typeof dbObj.examMeta === "object") {
+        appState.examTitle = dbObj.examMeta.examTitle || appState.examTitle;
+        appState.durationMinutes = dbObj.examMeta.durationMinutes || appState.durationMinutes;
+        appState.shuffleMode = dbObj.examMeta.shuffleMode || appState.shuffleMode;
+      }
+
+      if (Array.isArray(dbObj.originalQuestions) && dbObj.originalQuestions.length > 0) {
+        appState.originalQuestions = dbObj.originalQuestions;
+        appState.examLoaded = true;
+        changed = true;
+      }
+
+      if (changed) {
+        syncScoringInputsFromState();
+        updateTopBadges();
+        renderQuickTeacherDemoButtons();
+      }
+      return changed;
+    }
+
+    // Tự động tải CSDL từ Server (/api/db, api_db.php hoặc tuhoc_database.json)
+    async function syncDatabaseFromServer(showFeedback = false) {
+      if (window.location.protocol === "file:" || window.location.protocol === "about:") {
+        if (showFeedback) {
+          showToast("Bạn đang mở file trực tiếp trên máy. Hãy dùng nút '💾 Tải về File CSDL (tuhoc_database.json)' hoặc '📦 Xuất index.html' để đồng bộ!", "ℹ️");
+        }
+        return false;
+      }
+
+      const endpoints = [
+        { url: "./api/db?t=" + Date.now(), label: "Cloudflare Worker API (/api/db)" },
+        { url: "./api_db.php?t=" + Date.now(), label: "PHP Server CSDL (api_db.php)" },
+        { url: "./tuhoc_database.json?t=" + Date.now(), label: "File CSDL Web (tuhoc_database.json)" }
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep.url, { method: "GET", cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.teacherAccounts)) {
+              applyDatabasePayloadToState(data, false);
+              appState.dbModeLabel = ep.label;
+              const badge = document.getElementById("dbSyncStatusBadge");
+              if (badge) badge.textContent = "💾 CSDL: " + ep.label;
+              if (showFeedback) {
+                showToast(`Đã đồng bộ CSDL thành công từ ${ep.label}!`, "✅");
+              }
+              renderPortalAndTabsView();
+              return true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (showFeedback) {
+        showToast("Chưa phát hiện API Server. Bạn có thể bấm '📦 Xuất index.html (Đã nhúng sẵn CSDL)' hoặc up file tuhoc_database.json lên host!", "ℹ️");
+      }
+      return false;
+    }
+
+    // Tự động ghi CSDL lên Server (/api/db trên Cloudflare Worker hoặc api_db.php trên Hosting PHP)
+    async function syncDatabaseToServer(showFeedback = false) {
+      const payload = buildFullDatabasePayload();
+      safeSetStorage("tuhoc_v23_full_db", JSON.stringify(payload));
+      updateDatabaseModalReadout();
+
+      if (window.location.protocol === "file:" || window.location.protocol === "about:") {
+        return false;
+      }
+
+      const postTargets = ["./api/db", "./api_db.php"];
+      for (const url of postTargets) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const respData = await res.json();
+            if (respData && respData.status === "ok") {
+              appState.dbModeLabel = url.includes("api/db") ? "Cloudflare Worker API (/api/db)" : "Server CSDL (tuhoc_database.json)";
+              const badge = document.getElementById("dbSyncStatusBadge");
+              if (badge) badge.textContent = "💾 CSDL: Đã lưu lên Server";
+              if (showFeedback) {
+                showToast("Đã lưu toàn bộ CSDL (Tài khoản GV, HS, Đề thi, Bài làm) lên Server thành công!", "☁️");
+              }
+              return true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (showFeedback) {
+        showToast("Host hiện tại đang chạy chế độ tĩnh. Hãy tải file 'tuhoc_database.json' hoặc 'index.html (Đã nhúng CSDL)' để cập nhật lên host!", "💾");
+      }
+      return false;
+    }
+
     function loadPersistentAccountsAndResults() {
-      const savedTeachers = safeGetStorage("tuhoc_v22_teachers", "");
+      // 1. Nạp từ bản nhúng PRELOADED_DATABASE_SNAPSHOT (nếu Giáo viên đã xuất index.html nhúng sẵn CSDL)
+      if (PRELOADED_DATABASE_SNAPSHOT && typeof PRELOADED_DATABASE_SNAPSHOT === "object") {
+        applyDatabasePayloadToState(PRELOADED_DATABASE_SNAPSHOT, true);
+      }
+
+      // 2. Nạp từ localStorage và hợp nhất
+      const savedTeachers = safeGetStorage("tuhoc_v23_teachers", "") || safeGetStorage("tuhoc_v22_teachers", "");
       if (savedTeachers) {
         try {
           const parsedT = JSON.parse(savedTeachers);
           if (Array.isArray(parsedT) && parsedT.length > 0) {
-            appState.teacherAccounts = parsedT;
+            appState.teacherAccounts = mergeByKey(appState.teacherAccounts, parsedT, "username");
           }
         } catch (e) {}
       }
@@ -1301,12 +1571,12 @@
         appState.teacherAccounts = JSON.parse(JSON.stringify(DEFAULT_TEACHER_ACCOUNTS));
       }
 
-      const savedAcc = safeGetStorage("tuhoc_v22_accounts", "");
+      const savedAcc = safeGetStorage("tuhoc_v23_accounts", "") || safeGetStorage("tuhoc_v22_accounts", "");
       if (savedAcc) {
         try {
           const parsed = JSON.parse(savedAcc);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            appState.studentAccounts = parsed;
+            appState.studentAccounts = mergeByKey(appState.studentAccounts, parsed, "username");
           }
         } catch (e) {}
       }
@@ -1314,15 +1584,15 @@
         appState.studentAccounts = JSON.parse(JSON.stringify(DEFAULT_STUDENT_ACCOUNTS));
       }
 
-      const savedSub = safeGetStorage("tuhoc_v22_submissions", "");
+      const savedSub = safeGetStorage("tuhoc_v23_submissions", "") || safeGetStorage("tuhoc_v22_submissions", "");
       if (savedSub) {
         try {
           const parsedSub = JSON.parse(savedSub);
           if (Array.isArray(parsedSub)) {
-            appState.submissions = parsedSub;
+            appState.submissions = mergeByKey(appState.submissions, parsedSub, "id");
           }
         } catch (e) {}
-      } else {
+      } else if (appState.submissions.length === 0) {
         appState.submissions = JSON.parse(JSON.stringify(DEFAULT_SUBMISSIONS));
       }
 
@@ -1331,17 +1601,104 @@
     }
 
     function savePersistentTeachers() {
-      safeSetStorage("tuhoc_v22_teachers", JSON.stringify(appState.teacherAccounts));
+      safeSetStorage("tuhoc_v23_teachers", JSON.stringify(appState.teacherAccounts));
+      syncDatabaseToServer(false);
     }
 
     function savePersistentAccounts() {
-      safeSetStorage("tuhoc_v22_accounts", JSON.stringify(appState.studentAccounts));
+      safeSetStorage("tuhoc_v23_accounts", JSON.stringify(appState.studentAccounts));
       updateTopBadges();
+      syncDatabaseToServer(false);
     }
 
     function savePersistentSubmissions() {
-      safeSetStorage("tuhoc_v22_submissions", JSON.stringify(appState.submissions));
+      safeSetStorage("tuhoc_v23_submissions", JSON.stringify(appState.submissions));
       updateTopBadges();
+      syncDatabaseToServer(false);
+    }
+
+    // Các hàm quản lý Modal CSDL Web (Xuất/Nạp tuhoc_database.json & Xuất index.html nhúng sẵn CSDL)
+    function openDatabaseManagerModal() {
+      updateDatabaseModalReadout();
+      const modal = document.getElementById("databaseManagerModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+
+    function closeDatabaseManagerModal() {
+      const modal = document.getElementById("databaseManagerModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function updateDatabaseModalReadout() {
+      const stEl = document.getElementById("modalDbConnectionStatus");
+      const sumEl = document.getElementById("modalDbSummaryStats");
+      if (stEl) stEl.textContent = appState.dbModeLabel;
+      if (sumEl) {
+        sumEl.textContent = `Đang lưu trữ trong CSDL: ${appState.teacherAccounts.length} Tài khoản Giáo viên • ${appState.studentAccounts.length} Tài khoản Học sinh • ${appState.originalQuestions.length} Câu hỏi đề gốc • ${appState.submissions.length} Lượt nộp bài`;
+      }
+    }
+
+    function exportDatabaseJsonFile() {
+      const payload = buildFullDatabasePayload();
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "tuhoc_database.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Đã tải về file CSDL 'tuhoc_database.json'! Đặt file này cùng thư mục với index.html trên web để mọi thiết bị tự động nhận dữ liệu.", "💾");
+    }
+
+    async function handleImportDatabaseJsonFile(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (applyDatabasePayloadToState(parsed, true)) {
+          prepareStudentExamSession();
+          renderPortalAndTabsView();
+          updateDatabaseModalReadout();
+          syncDatabaseToServer(false);
+          showToast(`Đã nạp thành công CSDL từ file ${file.name} (${appState.teacherAccounts.length} GV, ${appState.studentAccounts.length} HS)!`, "✅");
+        } else {
+          showToast("File JSON không đúng cấu trúc CSDL của TDO-TUHOC!", "⚠️");
+        }
+      } catch (err) {
+        showToast("Không thể đọc file JSON: " + err.message, "❌");
+      }
+      event.target.value = "";
+    }
+
+    // Xuất file index.html đã nhúng cứng toàn bộ CSDL hiện tại (GV, Lớp, HS, Đề thi, Bài làm)
+    function exportSelfContainedIndexHtml() {
+      const payload = buildFullDatabasePayload();
+      const serializedDb = JSON.stringify(payload);
+      let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      fullHtml = fullHtml.replace(
+        /\/\*__EMBEDDED_DB_START__\*\/[\s\S]*?\/\*__EMBEDDED_DB_END__\*\//,
+        `/*__EMBEDDED_DB_START__*/\n    const PRELOADED_DATABASE_SNAPSHOT = ${serializedDb};\n    /*__EMBEDDED_DB_END__*/`
+      );
+      const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "index.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Đã xuất file 'index.html' chứa sẵn toàn bộ Tài khoản GV, Lớp, Tài khoản HS và Đề thi! Bạn up file này lên tuhoc.vubao.workers.dev là điện thoại đăng nhập được ngay!", "📦");
     }
 
     function getTeacherScopedStudents() {
@@ -2158,7 +2515,7 @@
 
       const matched = appState.teacherAccounts.find(t => t.username.toLowerCase() === u && t.password === p);
       if (!matched) {
-        showToast("Sai Tài khoản hoặc Mật khẩu Giáo viên! Bạn có thể chọn tài khoản mẫu bên dưới hoặc tạo tài khoản Giáo viên mới.", "❌");
+        showToast("Sai Tài khoản hoặc Mật khẩu Giáo viên! Nếu vừa tạo trên máy khác mà chưa đồng bộ Server, hãy bấm '💾 Mở Quản lý File CSDL'.", "❌");
         return;
       }
 
@@ -2232,7 +2589,7 @@
       appState.portalMode = "teacher";
       appState.activeTeacherTab = "accounts";
       renderPortalAndTabsView();
-      showToast(`Đã tạo tài khoản Giáo viên ${fullName} (${username}) và khởi tạo lớp ${newTeacher.classes.join(", ")}!`, "🎉");
+      showToast(`Đã tạo tài khoản Giáo viên ${fullName} (${username}), khởi tạo lớp ${newTeacher.classes.join(", ")} và lưu vào CSDL!`, "🎉");
     }
 
     function handleTeacherLogout() {
@@ -2330,7 +2687,7 @@
       const input = document.getElementById("inputNewClassName");
       const rawName = (input ? input.value : "").trim().toUpperCase();
       if (!rawName) {
-        showToast("Vui lòng nhập tên Lớp mới (VD: 12A3, 11B2)!", "⚠️");
+        showToast("Vui lòng nhập tên Lớp mới (VD: 10A01, 12A3)!", "⚠️");
         return;
       }
       if (!appState.loggedInTeacher.classes) {
@@ -2347,7 +2704,7 @@
       syncTeacherClassSelectors();
       renderTeacherClassesCards();
       renderStudentAccountsTable();
-      showToast(`Đã tạo thêm Lớp ${rawName} cho Giáo viên ${appState.loggedInTeacher.fullName}!`, "🏫");
+      showToast(`Đã tạo thêm Lớp ${rawName} và lưu vào CSDL!`, "🏫");
     }
 
     function deleteTeacherClass(className) {
@@ -2418,12 +2775,12 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.2.csv";
+      a.download = "Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.3.csv";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast("Đã tải xuống File mẫu CSV: Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.2.csv", "📥");
+      showToast("Đã tải xuống File mẫu CSV: Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.3.csv", "📥");
     }
 
     function triggerCsvFileInput() {
@@ -2433,7 +2790,7 @@
 
     function loadSampleStudentsCsvDemo() {
       const rows = parseCsvTextToRows(SAMPLE_CSV_CONTENT);
-      processImportedStudentRows(rows, "Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.2.csv");
+      processImportedStudentRows(rows, "Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.3.csv");
       showToast("Đã nạp thử dữ liệu từ File CSV mẫu! Kiểm tra bảng Xem trước và bấm Xác nhận.", "📄");
     }
 
@@ -2663,7 +3020,7 @@
       renderTeacherClassesCards();
       renderStudentAccountsTable();
       updateTeacherStatsAndShareLink();
-      showToast(`Hoàn tất nạp từ file CSV: Tạo mới ${createdCount} tài khoản, cập nhật ${updatedCount} tài khoản!`, "🎉");
+      showToast(`Hoàn tất nạp từ file CSV: Tạo mới ${createdCount} tài khoản, cập nhật ${updatedCount} tài khoản và lưu vào CSDL!`, "🎉");
     }
 
     // =========================================================================
@@ -2675,12 +3032,10 @@
       const p2Total = qs.filter(q => q.part === 2).length;
       const p3Total = qs.filter(q => q.part === 3).length;
 
-      // Tự động điền số câu đếm được từ đề gốc
       appState.scoringConfig.p1Count = p1Total;
       appState.scoringConfig.p2Count = p2Total;
       appState.scoringConfig.p3Count = p3Total;
 
-      // Giữ mức điểm gợi ý chuẩn (0.25 | 0.1, 0.25, 0.5, 1.0 | 0.5) nếu chưa chỉnh
       if (appState.scoringConfig.p1Point === undefined) appState.scoringConfig.p1Point = 0.25;
       if (appState.scoringConfig.p2Pt1 === undefined) appState.scoringConfig.p2Pt1 = 0.1;
       if (appState.scoringConfig.p2Pt2 === undefined) appState.scoringConfig.p2Pt2 = 0.25;
@@ -2739,6 +3094,7 @@
       syncScoringInputsFromState();
       updateTeacherStatsAndShareLink();
       prepareStudentExamSession();
+      syncDatabaseToServer(false);
       showToast("Đã đặt lại số câu theo đề gốc và mức điểm gợi ý chuẩn (0.25 / 0.1-1.0 / 0.5)!", "↺");
     }
 
@@ -2770,6 +3126,7 @@
       updateScoringSummaryUI();
       updateTeacherStatsAndShareLink();
       prepareStudentExamSession();
+      syncDatabaseToServer(false);
     }
 
     function getCalculatedStructureTotals() {
@@ -2835,8 +3192,7 @@
     async function loadEmbeddedSampleDocx() {
       try {
         const bytes = base64ToUint8Array(EMBEDDED_SAMPLE_DOCX_B64);
-        await parseDocxBinary(bytes, "De_Goc_Mau_TUHOC_2025_Co_Loi_Giai.docx");
-        showToast("Đã nạp Đề gốc mẫu, tự động đếm số câu và điền sẵn gợi ý thang điểm!", "✅");
+        await parseDocxBinary(bytes, "De_Goc_Mau_TUHOC_2025_Co_Loi_Giai.docx", false);
       } catch (err) {
         showToast("Lỗi khi nạp đề mẫu: " + err.message, "❌");
       }
@@ -2861,14 +3217,14 @@
       if (!file) return;
       try {
         const arrayBuffer = await file.arrayBuffer();
-        await parseDocxBinary(new Uint8Array(arrayBuffer), file.name);
-        showToast(`Đã nạp đề gốc "${file.name}", tự động đếm số câu từng phần và điền gợi ý điểm!`, "✅");
+        await parseDocxBinary(new Uint8Array(arrayBuffer), file.name, true);
+        showToast(`Đã nạp đề gốc "${file.name}", tự động đếm câu, điền gợi ý điểm và lưu vào CSDL!`, "✅");
       } catch (err) {
         showToast("Không thể đọc file .docx: " + err.message, "❌");
       }
     }
 
-    async function parseDocxBinary(uint8Array, filename) {
+    async function parseDocxBinary(uint8Array, filename, shouldSyncServer = true) {
       const zip = await JSZip.loadAsync(uint8Array);
       const docXmlFile = zip.file("word/document.xml");
       if (!docXmlFile) {
@@ -3079,7 +3435,6 @@
       appState.openTeacherSolutions = {};
       appState.teacherAllSolutionsOpen = false;
 
-      // Tự động đếm số câu từng phần và điền vào mục 4. Cấu trúc đề & Tính điểm
       populateScoringConfigFromParsedDocx();
 
       const nameEl = document.getElementById("selectedDocxName");
@@ -3093,6 +3448,9 @@
       updateTeacherStatsAndShareLink();
       renderTeacherQuestionList();
       prepareStudentExamSession();
+      if (shouldSyncServer) {
+        syncDatabaseToServer(false);
+      }
     }
 
     function extractStructuredQuestionsFromParagraphs(paras) {
@@ -3403,8 +3761,9 @@
         return;
       }
       handleScoringConfigChange();
+      syncDatabaseToServer(false);
       const totals = getCalculatedStructureTotals();
-      showToast(`Đã áp dụng Cấu trúc Điểm (${totals.totalQuestions} câu • Tổng ${totals.totalMaxPoints.toFixed(2)} điểm) và tạo Link giao bài cho Học sinh!`, "🔗");
+      showToast(`Đã lưu Cấu trúc Điểm (${totals.totalQuestions} câu • Tổng ${totals.totalMaxPoints.toFixed(2)} điểm) vào CSDL và tạo Link giao bài!`, "🔗");
     }
 
     function copyStudentShareLink() {
@@ -3427,25 +3786,6 @@
       switchPortalMode("student");
       window.scrollTo({ top: 0, behavior: "smooth" });
       showToast("Chuyển sang Cổng Học sinh. Hãy đăng nhập bằng tài khoản Học sinh để làm bài!", "👨‍🎓");
-    }
-
-    function exportStandaloneStudentExamHtml() {
-      if (!appState.examLoaded || appState.originalQuestions.length === 0) {
-        generateStudentShareLink();
-        return;
-      }
-      updateTeacherStatsAndShareLink();
-      const currentHtml = document.documentElement.outerHTML;
-      const blob = new Blob(["<!DOCTYPE html>\n" + currentHtml], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "TUHOC_v2.2_Bai_Tap_Hoc_Sinh.html";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast("Đã xuất file TUHOC_v2.2_Bai_Tap_Hoc_Sinh.html để gửi cho học sinh!", "📤");
     }
 
     // =========================================================================
@@ -3654,7 +3994,7 @@
       updateTeacherStatsAndShareLink();
       renderTeacherClassesCards();
       renderStudentAccountsTable();
-      showToast(`Đã cấp tài khoản '${username}' (Lớp ${className}) cho học sinh ${fullName}!`, "✅");
+      showToast(`Đã cấp tài khoản '${username}' (Lớp ${className}) cho học sinh ${fullName} và lưu vào CSDL!`, "✅");
     }
 
     function bulkCreateStudentAccounts() {
@@ -3707,7 +4047,7 @@
       renderTeacherClassesCards();
       updateTeacherStatsAndShareLink();
       renderStudentAccountsTable();
-      showToast(`Đã cấp thành công ${createdCount} tài khoản học sinh mới vào Lớp!`, "✅");
+      showToast(`Đã cấp thành công ${createdCount} tài khoản học sinh mới vào Lớp và lưu vào CSDL!`, "✅");
     }
 
     function openTeacherResetPassModal(username) {
@@ -3791,7 +4131,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "Danh_Sach_Tai_Khoan_Hoc_Sinh_TUHOC_v2.2.csv";
+      link.download = "Danh_Sach_Tai_Khoan_Hoc_Sinh_TUHOC_v2.3.csv";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -3922,7 +4262,7 @@
       acc.changedByStudent = true;
       savePersistentAccounts();
       closeStudentChangePasswordModal();
-      showToast("Đã đổi mật khẩu thành công! Lần đăng nhập sau em hãy dùng mật khẩu mới nhé.", "✅");
+      showToast("Đã đổi mật khẩu thành công và đồng bộ lên CSDL!", "✅");
     }
 
     // =========================================================================
@@ -3953,7 +4293,6 @@
       const p2Orig = appState.originalQuestions.filter(q => q.part === 2);
       const p3Orig = appState.originalQuestions.filter(q => q.part === 3);
 
-      // Lấy số câu theo cấu hình của Giáo viên trong mục "4. Cấu trúc đề" (nếu nhập 0 thì bỏ qua phần đó)
       const p1Shuffled = mode === "none" ? p1Orig.slice() : shuffleArray(p1Orig);
       const p2Shuffled = mode === "none" ? p2Orig.slice() : shuffleArray(p2Orig);
       const p3Shuffled = mode === "none" ? p3Orig.slice() : shuffleArray(p3Orig);
@@ -3991,6 +4330,7 @@
           id: `SQ_1_${idx + 1}`,
           part: 1,
           displayNumber: idx + 1,
+          originalNumber: q.originalNumber,
           stemHtml: q.stemHtml,
           options: newOptions,
           correctAnswer: newCorrect,
@@ -4013,6 +4353,7 @@
           id: `SQ_2_${idx + 1}`,
           part: 2,
           displayNumber: idx + 1,
+          originalNumber: q.originalNumber,
           stemHtml: q.stemHtml,
           subItems: mappedSubs,
           solutionHtml: q.solutionHtml
@@ -4024,6 +4365,7 @@
           id: `SQ_3_${idx + 1}`,
           part: 3,
           displayNumber: idx + 1,
+          originalNumber: q.originalNumber,
           stemHtml: q.stemHtml,
           shortAnswer: q.shortAnswer,
           solutionHtml: q.solutionHtml
@@ -4342,7 +4684,6 @@
       return String(val || "").trim().replace(",", ".");
     }
 
-    // Chấm từng câu dựa trên đúng thang điểm của Giáo viên trong appState.scoringConfig
     function evaluateSingleStudentQuestion(q) {
       const sc = appState.scoringConfig;
       const userAns = appState.studentAnswers[q.id];
@@ -4407,12 +4748,24 @@
 
       appState.studentQuestions.forEach(q => {
         const ev = evaluateSingleStudentQuestion(q);
+        const rawUserVal = appState.studentAnswers[q.id];
         rawEarned += ev.earnedPoints;
         rawMax += ev.maxPoints;
         if (ev.isFullCorrect) fullCorrectCount++;
         else wrongOrPartialCount++;
+
         detailsList.push({
+          part: q.part,
+          displayNumber: q.displayNumber,
+          originalNumber: q.originalNumber || q.displayNumber,
           label: `Phần ${q.part} • Câu ${q.displayNumber}`,
+          stemHtml: q.stemHtml,
+          options: q.options ? JSON.parse(JSON.stringify(q.options)) : null,
+          correctAnswer: q.correctAnswer || "",
+          subItems: q.subItems ? JSON.parse(JSON.stringify(q.subItems)) : null,
+          shortAnswer: q.shortAnswer || "",
+          userRawChoice: rawUserVal !== undefined ? JSON.parse(JSON.stringify(rawUserVal)) : null,
+          solutionHtml: q.solutionHtml || "",
           userChoice: ev.studentSummary,
           correctChoice: ev.correctSummary,
           isCorrect: ev.isFullCorrect,
@@ -4483,11 +4836,11 @@
 
       renderStudentExamView();
       if (summaryCard) summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      showToast(`Đã nộp bài! Điểm đạt được: ${rawEarned.toFixed(2)}/${rawMax.toFixed(2)} điểm. Bấm '📖 Hiện lời giải chi tiết' để xem hướng dẫn giải!`, "🎉");
+      showToast(`Đã nộp bài và lưu vào CSDL! Điểm đạt được: ${rawEarned.toFixed(2)}/${rawMax.toFixed(2)} điểm.`, "🎉");
     }
 
     // =========================================================================
-    // 15. BẢNG KẾT QUẢ BÀI LÀM THEO LỚP DÀNH CHO GIÁO VIÊN
+    // 15. BẢNG KẾT QUẢ BÀI LÀM & MODAL XEM CHI TIẾT BÀI LÀM CỦA HỌC SINH
     // =========================================================================
     function renderTeacherResultsDashboard() {
       const subs = getTeacherScopedSubmissions();
@@ -4556,33 +4909,218 @@
       }).join("");
     }
 
+    // Bổ sung thông tin câu hỏi, phương án & lời giải từ đề gốc nếu bản ghi cũ chưa có sẵn
+    function resolveEnrichedDetailItem(d, idx) {
+      let part = d.part;
+      let displayNumber = d.displayNumber;
+      if (!part || !displayNumber) {
+        const m = String(d.label || "").match(/Phần\s*(\d+)\s*•\s*Câu\s*(\d+)/i);
+        if (m) {
+          part = parseInt(m[1], 10);
+          displayNumber = parseInt(m[2], 10);
+        } else {
+          part = 1;
+          displayNumber = idx + 1;
+        }
+      }
+
+      const matchedOrig = (appState.originalQuestions || []).find(
+        q => q.part === part && q.originalNumber === (d.originalNumber || displayNumber)
+      ) || (appState.originalQuestions || []).filter(q => q.part === part)[displayNumber - 1] || null;
+
+      return {
+        part: part,
+        displayNumber: displayNumber,
+        label: d.label || `Phần ${part} • Câu ${displayNumber}`,
+        stemHtml: d.stemHtml || (matchedOrig ? matchedOrig.stemHtml : ""),
+        options: d.options || (matchedOrig && matchedOrig.options ? matchedOrig.options : null),
+        correctAnswer: d.correctAnswer || (matchedOrig && matchedOrig.correctAnswer ? matchedOrig.correctAnswer : ""),
+        subItems: d.subItems || (matchedOrig && matchedOrig.subItems ? matchedOrig.subItems : null),
+        shortAnswer: d.shortAnswer || (matchedOrig && matchedOrig.shortAnswer ? matchedOrig.shortAnswer : ""),
+        userRawChoice: d.userRawChoice !== undefined ? d.userRawChoice : null,
+        solutionHtml: d.solutionHtml || (matchedOrig ? matchedOrig.solutionHtml : ""),
+        userChoice: d.userChoice || "",
+        correctChoice: d.correctChoice || "",
+        isCorrect: Boolean(d.isCorrect),
+        earned: Number(d.earned || 0),
+        max: Number(d.max || 0)
+      };
+    }
+
     function openSubmissionDetailModal(subId) {
       const sub = appState.submissions.find(s => s.id === subId);
       if (!sub) return;
-      const rw = Number(sub.rawScore !== undefined ? sub.rawScore : sub.score10 || 0);
-      const mx = Number(sub.maxRawScore || 10);
-      document.getElementById("submissionModalTitle").textContent = `${sub.fullName} (TK: ${sub.username} • Lớp ${sub.className}) — Mã đề ${sub.examCode} — Điểm: ${rw.toFixed(2)}/${mx.toFixed(2)}đ`;
+      appState.activeModalSubmissionId = subId;
+      appState.openModalSolutions = {};
+      appState.modalAllSolutionsOpen = false;
 
-      const bodyEl = document.getElementById("submissionModalBody");
-      if (bodyEl) {
-        bodyEl.innerHTML = (sub.details || []).map(d => `
-          <div class="p-3.5 rounded-xl bg-white border ${d.isCorrect ? "border-emerald-300" : "border-rose-300"} flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <div class="space-y-0.5">
-              <div class="font-extrabold text-slate-900">${escapeHtml(d.label)}</div>
-              <div class="text-slate-600">${escapeHtml(d.userChoice)} • <strong>${escapeHtml(d.correctChoice)}</strong></div>
-            </div>
-            <span class="px-2.5 py-1 rounded-full font-extrabold shrink-0 ${d.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}">
-              ${d.isCorrect ? `✔ Đúng (+${Number(d.earned).toFixed(2)}đ)` : `✘ Sai / Thiếu (${Number(d.earned).toFixed(2)}/${Number(d.max).toFixed(2)}đ)`}
-            </span>
-          </div>
-        `).join("");
-      }
+      const btnAll = document.getElementById("btnToggleAllModalSolutions");
+      if (btnAll) btnAll.textContent = "📖 Hiện tất cả lời giải chi tiết";
+
+      renderSubmissionDetailModalContent();
 
       const modal = document.getElementById("teacherSubmissionDetailModal");
       if (modal) {
         modal.classList.remove("hidden");
         modal.classList.add("flex");
       }
+    }
+
+    function toggleModalSingleSolution(idx) {
+      appState.openModalSolutions[idx] = !appState.openModalSolutions[idx];
+      renderSubmissionDetailModalContent();
+    }
+
+    function toggleAllModalSubmissionSolutions() {
+      const sub = appState.submissions.find(s => s.id === appState.activeModalSubmissionId);
+      if (!sub) return;
+      appState.modalAllSolutionsOpen = !appState.modalAllSolutionsOpen;
+      (sub.details || []).forEach((_, idx) => {
+        appState.openModalSolutions[idx] = appState.modalAllSolutionsOpen;
+      });
+      const btnAll = document.getElementById("btnToggleAllModalSolutions");
+      if (btnAll) {
+        btnAll.textContent = appState.modalAllSolutionsOpen ? "🙈 Ẩn tất cả lời giải chi tiết" : "📖 Hiện tất cả lời giải chi tiết";
+      }
+      renderSubmissionDetailModalContent();
+    }
+
+    function renderSubmissionDetailModalContent() {
+      const sub = appState.submissions.find(s => s.id === appState.activeModalSubmissionId);
+      if (!sub) return;
+      const rw = Number(sub.rawScore !== undefined ? sub.rawScore : sub.score10 || 0);
+      const mx = Number(sub.maxRawScore || 10);
+      document.getElementById("submissionModalTitle").textContent = `${sub.fullName} (TK: ${sub.username} • Lớp ${sub.className}) — Mã đề ${sub.examCode} — Điểm: ${rw.toFixed(2)}/${mx.toFixed(2)}đ`;
+
+      const bodyEl = document.getElementById("submissionModalBody");
+      if (!bodyEl) return;
+
+      bodyEl.innerHTML = (sub.details || []).map((rawD, idx) => {
+        const d = resolveEnrichedDetailItem(rawD, idx);
+        const isSolOpen = Boolean(appState.openModalSolutions[idx]);
+        const hasSolution = Boolean(d.solutionHtml && d.solutionHtml.trim().length > 0);
+
+        let optionsBreakdownHtml = "";
+
+        if (d.part === 1 && d.options) {
+          let chosenLetter = d.userRawChoice;
+          if (!chosenLetter && d.userChoice) {
+            const cm = String(d.userChoice).match(/\b([ABCD])\b/);
+            if (cm) chosenLetter = cm[1];
+          }
+          let rightLetter = d.correctAnswer;
+          if (!rightLetter && d.correctChoice) {
+            const rm = String(d.correctChoice).match(/\b([ABCD])\b/);
+            if (rm) rightLetter = rm[1];
+          }
+
+          optionsBreakdownHtml = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+              ${["A", "B", "C", "D"].map(k => {
+                const isStudentPicked = chosenLetter === k;
+                const isRightAns = rightLetter === k;
+                let boxCls = "bg-slate-50 border-slate-200 text-slate-700";
+                let tagHtml = "";
+
+                if (isRightAns && isStudentPicked) {
+                  boxCls = "bg-emerald-50 border-emerald-500 text-emerald-950 font-bold ring-1 ring-emerald-400";
+                  tagHtml = `<span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-extrabold text-[10px] shrink-0">✔ HS chọn đúng</span>`;
+                } else if (isRightAns) {
+                  boxCls = "bg-emerald-50/80 border-emerald-400 text-emerald-900 font-bold";
+                  tagHtml = `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-[10px] shrink-0">✔ Đáp án đúng</span>`;
+                } else if (isStudentPicked) {
+                  boxCls = "bg-rose-50 border-rose-400 text-rose-900 font-bold ring-1 ring-rose-300";
+                  tagHtml = `<span class="px-2 py-0.5 rounded bg-rose-600 text-white font-extrabold text-[10px] shrink-0">✘ HS đã chọn</span>`;
+                }
+
+                return `
+                  <div class="p-2.5 rounded-xl border ${boxCls} flex items-center justify-between gap-2">
+                    <div><span class="font-extrabold">${k}.</span> ${d.options[k] || ""}</div>
+                    ${tagHtml}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          `;
+        } else if (d.part === 2 && d.subItems && d.subItems.length > 0) {
+          const userMap = (d.userRawChoice && typeof d.userRawChoice === "object") ? d.userRawChoice : {};
+          optionsBreakdownHtml = `
+            <div class="space-y-1.5 pt-1 text-xs">
+              ${d.subItems.map(subItem => {
+                const uVal = userMap[subItem.key];
+                const hasChosen = uVal === true || uVal === false;
+                const subMatch = hasChosen && uVal === subItem.isTrue;
+                const rowCls = subMatch ? "bg-emerald-50/70 border-emerald-300" : "bg-rose-50/70 border-rose-300";
+                const userLabel = !hasChosen ? "Bỏ trống" : (uVal ? "Đúng" : "Sai");
+
+                return `
+                  <div class="p-2.5 rounded-xl border ${rowCls} flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="text-slate-900"><strong>${subItem.key})</strong> ${subItem.textHtml}</div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="px-2 py-0.5 rounded font-bold ${subMatch ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"}">
+                        HS chọn: ${userLabel}
+                      </span>
+                      <span class="px-2 py-0.5 rounded font-extrabold bg-white border border-slate-300 text-slate-800">
+                        Đáp án: ${subItem.isTrue ? "ĐÚNG" : "SAI"}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          `;
+        } else if (d.part === 3) {
+          const stuFill = d.userRawChoice !== null && d.userRawChoice !== undefined && String(d.userRawChoice).trim() !== ""
+            ? String(d.userRawChoice)
+            : String(d.userChoice || "").replace(/^Em\s*điền\s*:\s*/i, "") || "(Bỏ trống)";
+          const ansFill = d.shortAnswer || String(d.correctChoice || "").replace(/^Đáp\s*án\s*đúng\s*:\s*/i, "");
+
+          optionsBreakdownHtml = `
+            <div class="flex flex-wrap items-center gap-3 pt-1 text-xs">
+              <div class="px-3 py-2 rounded-xl border ${d.isCorrect ? "bg-emerald-50 border-emerald-400 text-emerald-900" : "bg-rose-50 border-rose-400 text-rose-900"} font-bold">
+                ✏️ Phương án Học sinh điền: <span class="font-mono text-sm underline ml-1">${escapeHtml(stuFill)}</span>
+              </div>
+              <div class="px-3 py-2 rounded-xl border bg-emerald-50 border-emerald-400 text-emerald-900 font-bold">
+                🎯 Đáp án đúng của câu: <span class="font-mono text-sm underline ml-1">${escapeHtml(ansFill)}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-2xl bg-white border-2 ${d.isCorrect ? "border-emerald-400" : "border-rose-300"} space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-3 py-1 rounded-lg bg-slate-900 text-white font-extrabold text-xs">${escapeHtml(d.label)}</span>
+                <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg">
+                  ${escapeHtml(d.userChoice)} • <strong class="text-emerald-800">${escapeHtml(d.correctChoice)}</strong>
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                ${hasSolution ? `
+                  <button type="button" onclick="toggleModalSingleSolution(${idx})" class="px-3 py-1 rounded-xl font-extrabold text-xs border transition ${isSolOpen ? "bg-amber-500 text-slate-950 border-amber-500" : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300"}">
+                    ${isSolOpen ? "🙈 Ẩn lời giải chi tiết" : "📖 Hiện lời giải chi tiết"}
+                  </button>
+                ` : ""}
+                <span class="px-2.5 py-1 rounded-full font-extrabold text-xs shrink-0 ${d.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}">
+                  ${d.isCorrect ? `✔ Đúng (+${d.earned.toFixed(2)}đ)` : `✘ Sai / Thiếu (${d.earned.toFixed(2)}/${d.max.toFixed(2)}đ)`}
+                </span>
+              </div>
+            </div>
+
+            ${d.stemHtml ? `<div class="text-sm text-slate-900 leading-relaxed font-medium">${d.stemHtml}</div>` : ""}
+
+            ${optionsBreakdownHtml}
+
+            ${(hasSolution && isSolOpen) ? `
+              <div class="p-3.5 rounded-xl bg-amber-50/90 border border-amber-300 text-xs md:text-sm text-slate-900 space-y-1">
+                <div class="font-extrabold text-amber-950">📖 Lời giải chi tiết của câu hỏi:</div>
+                <div class="leading-relaxed">${d.solutionHtml}</div>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }).join("");
     }
 
     function closeSubmissionDetailModal() {
@@ -4603,12 +5141,12 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "Bang_Ket_Qua_Bai_Lam_Hoc_Sinh_TUHOC_v2.2.csv";
+      link.download = "Bang_Ket_Qua_Bai_Lam_Hoc_Sinh_TUHOC_v2.3.csv";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      showToast("Đã xuất Bảng điểm ra file Bang_Ket_Qua_Bai_Lam_Hoc_Sinh_TUHOC_v2.2.csv!", "📥");
+      showToast("Đã xuất Bảng điểm ra file Bang_Ket_Qua_Bai_Lam_Hoc_Sinh_TUHOC_v2.3.csv!", "📥");
     }
 
     function clearAllStudentResults() {
@@ -4645,7 +5183,7 @@
               appState.scoringConfig = Object.assign({}, DEFAULT_SCORING_CONFIG, payload.sc);
             }
             if (Array.isArray(payload.a) && payload.a.length > 0) {
-              appState.studentAccounts = payload.a;
+              appState.studentAccounts = mergeByKey(appState.studentAccounts, payload.a, "username");
               savePersistentAccounts();
             }
             appState.originalQuestions = payload.q;
@@ -4682,8 +5220,8 @@
           const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
           if (file && file.name.toLowerCase().endsWith(".docx")) {
             const buf = await file.arrayBuffer();
-            await parseDocxBinary(new Uint8Array(buf), file.name);
-            showToast(`Đã nạp đề gốc "${file.name}", tự động đếm số câu và điền gợi ý điểm!`, "✅");
+            await parseDocxBinary(new Uint8Array(buf), file.name, true);
+            showToast(`Đã nạp đề gốc "${file.name}", tự động đếm số câu, điền gợi ý điểm và lưu vào CSDL!`, "✅");
           } else {
             showToast("Vui lòng kéo thả file định dạng Word (.docx)!", "⚠️");
           }
@@ -4719,6 +5257,7 @@
       const openedFromLink = checkUrlHashForStudentLink();
       if (!openedFromLink) {
         await loadEmbeddedSampleDocx();
+        await syncDatabaseFromServer(false);
         renderPortalAndTabsView();
       }
     });

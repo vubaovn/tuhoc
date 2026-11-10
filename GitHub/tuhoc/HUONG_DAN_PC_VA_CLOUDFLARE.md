@@ -1,15 +1,26 @@
-# HƯỚNG DẪN SỬ DỤNG ỨNG DỤNG TDO-TUHOC v2.2
+# HƯỚNG DẪN SỬ DỤNG & ĐỒNG BỘ CSDL ĐA THIẾT BỊ TDO-TUHOC v2.3
 
-## Các nâng cấp ở Phiên bản v2.2
-1. **Đã bỏ mục nhập file Excel (`.xlsx`), chỉ giữ lại nhập hàng loạt từ file CSV (`.csv`)**:
-   - Giao diện gọn gàng, ổn định 100%, hỗ trợ tải trực tiếp file mẫu `Mau_Danh_Sach_Hoc_Sinh_TUHOC_v2.2.csv` (chuẩn UTF-8 mở bằng Excel hoặc Notepad) và nạp hàng loạt tài khoản học sinh từ file `.csv`.
-2. **Bổ sung mục "4. Cấu trúc đề & Tính điểm" khi Giáo viên nạp đề gốc**:
-   - Ngay khi Giáo viên chọn file đề gốc `.docx`, hệ thống **tự động đếm số câu từng phần** (Phần 1, Phần 2, Phần 3) và **điền sẵn gợi ý mức điểm chuẩn**:
-     - **Phần 1 (nhiều lựa chọn)**: Số câu tự đếm + Điểm mỗi câu gợi ý `0.25`.
-     - **Phần 2 (đúng/sai)**: Số câu tự đếm + Điểm đúng 1 ý (`0.1`), 2 ý (`0.25`), 3 ý (`0.5`), 4 ý (`1.0`).
-     - **Phần 3 (điền số)**: Số câu tự đếm + Điểm mỗi câu gợi ý `0.5`.
-   - Giáo viên có thể chỉnh sửa trực tiếp số câu (nhập `0` nếu không có phần đó) và sửa điểm số mỗi câu ngay trong quá trình nạp đề gốc.
-   - Hệ thống tự động tính tổng điểm cấu trúc đề, nhúng cấu hình điểm vào Link/File giao bài và chấm điểm học sinh chính xác theo mức điểm Giáo viên đã thiết lập.
-3. **Bảo mật Khu vực Giáo viên & Phân quyền Lớp học**:
-   - Toàn bộ khu vực Giáo viên được khóa sau màn hình **Đăng nhập / Tạo tài khoản Giáo viên**.
-   - Mỗi Giáo viên quản lý Lớp học, danh sách tài khoản Học sinh và Bảng điểm riêng của lớp mình.
+## 1. Giải thích vì sao bản cũ tạo tài khoản trên Windows 11 nhưng mở Điện thoại không đăng nhập được?
+- Ở các bản trước, ứng dụng chạy thuần tĩnh và chỉ lưu dữ liệu trong `localStorage` của trình duyệt trên chiếc máy tính Windows 11 đó. Khi bạn mở điện thoại truy cập `https://tuhoc.vubao.workers.dev/`, trình duyệt trên điện thoại có bộ nhớ riêng nên không thấy dữ liệu đã tạo trên máy tính.
+
+## 2. Cách đồng bộ CSDL đa thiết bị (Windows 11 + Điện thoại + Máy tính Học sinh) ở Bản v2.3
+Trong gói **`tuhoc_v2.3_full_package.zip`** đã tích hợp sẵn **3 phương thức lưu trữ CSDL**:
+
+### Cách A (Đơn giản nhất - Không cần cấu hình KV hay PHP):
+1. Bạn mở trang web trên máy tính Windows 11, tạo Tài khoản Giáo viên, tạo Lớp, nạp danh sách Học sinh từ file `.csv` và nạp Đề gốc `.docx` (kèm chỉnh điểm).
+2. Bấm nút **"💾 CSDL Web"** ở góc trên bên phải -> chọn **"📦 Xuất file index.html (Đã nhúng sẵn toàn bộ CSDL)"** (hoặc tải file **`tuhoc_database.json`**).
+3. Up file `index.html` (hoặc `tuhoc_database.json`) đó lên `tuhoc.vubao.workers.dev`. Ngay lập tức mọi điện thoại và máy tính truy cập `https://tuhoc.vubao.workers.dev/` đều có sẵn 100% Tài khoản Giáo viên, Tài khoản Học sinh và Đề thi!
+
+### Cách B (Tự động đồng bộ 2 chiều thời gian thực trên Cloudflare `tuhoc.vubao.workers.dev`):
+1. Trong gói ZIP đã có sẵn file **`_worker.js`**. Bạn đẩy toàn bộ thư mục (gồm `index.html`, `tuhoc_database.json`, `_worker.js`) lên Cloudflare Pages / Workers.
+2. Trên `dash.cloudflare.com`, vào **Workers & Pages -> KV**, tạo một KV tên là `TUHOC_DB` và gắn (Bind) biến `TUHOC_DB` vào dự án.
+3. Khi đó mọi thao tác tạo tài khoản GV/HS, nạp đề hay học sinh nộp bài trên bất kỳ điện thoại/máy tính nào đều tự động lưu thẳng vào CSDL đám mây qua API `/api/db`!
+
+### Cách C (Chạy trên Hosting PHP):
+- Giải nén gói ZIP lên Hosting PHP (có sẵn file `api_db.php` và `tuhoc_database.json`). Mọi dữ liệu sẽ tự động ghi trực tiếp vào file `tuhoc_database.json` trên host.
+
+## 3. Xem chi tiết bài làm của Học sinh (Bản v2.3)
+- Khi Giáo viên bấm **"🔍 Xem bài làm"**, hộp thoại chi tiết sẽ hiển thị đầy đủ:
+  - Nội dung câu hỏi và công thức Toán KaTeX.
+  - Toàn bộ 4 phương án `A, B, C, D` (Phần 1), từng ý `a, b, c, d` (Phần 2), hoặc câu trả lời ngắn (Phần 3) kèm đánh dấu rõ phương án Học sinh đã chọn và Đáp án đúng.
+  - Nút **"📖 Hiện lời giải chi tiết"** ở từng câu cụ thể (và nút **"📖 Hiện tất cả lời giải chi tiết"** trên thanh tiêu đề hộp thoại).
